@@ -61,14 +61,12 @@ var Main = (function (_super) {
         };
         //设置加载进度界面
         //Config to load process interface
-        // this.loadingView = new LoadingUI();
-        // this.addChild(this.loadingView);
-        var _myGrid = new MyGrid();
-        this.addChild(_myGrid);
+        this.loadingView = new LoadingUI();
+        this.addChild(this.loadingView);
         //初始化Resource资源加载库
         //initiate Resource loading library
-        // RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
-        // RES.loadConfig("resource/default.res.json", "resource/");
+        RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
+        RES.loadConfig("resource/default.res.json", "resource/");
     };
     /**
      * 配置文件加载完成,开始预加载preload资源组。
@@ -128,49 +126,19 @@ var Main = (function (_super) {
      * Create a game scene
      */
     Main.prototype.createGameScene = function () {
-        var sky = this.createBitmapByName("bg_jpg");
-        this.addChild(sky);
         var stageW = this.stage.stageWidth;
         var stageH = this.stage.stageHeight;
-        sky.width = stageW;
-        sky.height = stageH;
-        var topMask = new egret.Shape();
-        topMask.graphics.beginFill(0x000000, 0.5);
-        topMask.graphics.drawRect(0, 0, stageW, 172);
-        topMask.graphics.endFill();
-        topMask.y = 33;
-        this.addChild(topMask);
-        var icon = this.createBitmapByName("egret_icon_png");
-        this.addChild(icon);
-        icon.x = 26;
-        icon.y = 33;
-        var line = new egret.Shape();
-        line.graphics.lineStyle(2, 0xffffff);
-        line.graphics.moveTo(0, 0);
-        line.graphics.lineTo(0, 117);
-        line.graphics.endFill();
-        line.x = 172;
-        line.y = 61;
-        this.addChild(line);
-        var colorLabel = new egret.TextField();
-        colorLabel.textColor = 0xffffff;
-        colorLabel.width = stageW - 172;
-        colorLabel.textAlign = "center";
-        colorLabel.text = "Hello Egret";
-        colorLabel.size = 24;
-        colorLabel.x = 172;
-        colorLabel.y = 80;
-        this.addChild(colorLabel);
-        var textfield = new egret.TextField();
-        this.addChild(textfield);
-        textfield.alpha = 0;
-        textfield.width = stageW - 172;
-        textfield.textAlign = egret.HorizontalAlign.CENTER;
-        textfield.size = 24;
-        textfield.textColor = 0xffffff;
-        textfield.x = 172;
-        textfield.y = 135;
-        this.textfield = textfield;
+        var sky = new egret.Shape();
+        sky.graphics.beginFill(0xEFEFEF, 1);
+        sky.graphics.drawRect(0, 0, stageW, stageH);
+        sky.graphics.endFill();
+        // sky.width = stageW;
+        // sky.height = stageH;
+        this.addChild(sky);
+        var tree = this.createBitmapByName("tree_png");
+        this.addChild(tree);
+        tree.x = 26;
+        tree.y = 33;
         //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
         // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
         RES.getResAsync("description_json", this.startAnimation, this);
