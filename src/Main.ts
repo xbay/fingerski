@@ -63,7 +63,12 @@ class Main extends egret.DisplayObjectContainer {
         //设置加载进度界面
         //Config to load process interface
         this.loadingView = new LoadingUI();
-        this.addChild(this.loadingView);
+        this.stage.addChild(this.loadingView);
+
+        //初始化Resource资源加载库
+        //initiate Resource loading library
+        RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
+        RES.loadConfig("resource/default.res.json", "resource/");
 
 
         //初始化Resource资源加载库
@@ -145,22 +150,50 @@ class Main extends egret.DisplayObjectContainer {
         sky.graphics.drawRect(0, 0, stageW, stageH);
         sky.graphics.endFill();
 
-        // sky.width = stageW;
-        // sky.height = stageH;
+        sky.width = stageW;
+        sky.height = stageH;
         this.addChild(sky);
         
+        let treeGroup = this.makeRandomPosition(5, 6);
 
-        let tree = this.createBitmapByName("tree_png");
-        this.addChild(tree);
-        tree.width = 30;
-        tree.height = 30;
-        tree.x = 26;
-        tree.y = 33;
-
+        treeGroup.forEach(element => {
+            let tree = this.createBitmapByName("tree_png");
+            tree.x = element.x;
+            tree.y = element.y;
+            tree.width = element.width;
+            tree.height = element.height;
+            this.addChild(tree);
+        });
+        
 
         //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
         // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
         RES.getResAsync("description_json", this.startAnimation, this)
+    }
+
+    /**
+     * 获取随机位置
+     * 先获得基准点点再做偏移
+     */
+    private makeRandomPosition(rows: number, cols: number): any[] {
+        let result = [];
+        let spaceX = this.stage.stageWidth / rows;
+        let spaceY = this.stage.stageHeight / cols;
+        let iconWidth = spaceX;
+        for(let row = 0;  row < rows; row++ ){
+            for(let col = 0; col < cols; col++ ){
+                let random = Math.floor(Math.random() * 5) / 10
+                let x = spaceX * (row + random);
+                let y = spaceY * (col + random);
+                let width = iconWidth * random;
+                let height = width;
+                console.log(random,x,y)
+                result.push({x, y, width, height})
+            }
+        }
+        console.log(result)
+
+        return result;
     }
 
     /**
@@ -193,12 +226,12 @@ class Main extends egret.DisplayObjectContainer {
 
             // 切换描述内容
             // Switch to described content
-            textfield.textFlow = textFlow;
-            let tw = egret.Tween.get(textfield);
-            tw.to({ "alpha": 1 }, 200);
-            tw.wait(2000);
-            tw.to({ "alpha": 0 }, 200);
-            tw.call(change, this);
+            // textfield.textFlow = textFlow;
+            // let tw = egret.Tween.get(textfield);
+            // tw.to({ "alpha": 1 }, 200);
+            // tw.wait(2000);
+            // tw.to({ "alpha": 0 }, 200);
+            // tw.call(change, this);
         };
 
         change();

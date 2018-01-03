@@ -62,7 +62,11 @@ var Main = (function (_super) {
         //设置加载进度界面
         //Config to load process interface
         this.loadingView = new LoadingUI();
-        this.addChild(this.loadingView);
+        this.stage.addChild(this.loadingView);
+        //初始化Resource资源加载库
+        //initiate Resource loading library
+        RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
+        RES.loadConfig("resource/default.res.json", "resource/");
         //初始化Resource资源加载库
         //initiate Resource loading library
         RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
@@ -126,22 +130,51 @@ var Main = (function (_super) {
      * Create a game scene
      */
     Main.prototype.createGameScene = function () {
+        var _this = this;
         var stageW = this.stage.stageWidth;
         var stageH = this.stage.stageHeight;
         var sky = new egret.Shape();
         sky.graphics.beginFill(0xEFEFEF, 1);
         sky.graphics.drawRect(0, 0, stageW, stageH);
         sky.graphics.endFill();
-        // sky.width = stageW;
-        // sky.height = stageH;
+        sky.width = stageW;
+        sky.height = stageH;
         this.addChild(sky);
-        var tree = this.createBitmapByName("tree_png");
-        this.addChild(tree);
-        tree.x = 26;
-        tree.y = 33;
+        var treeGroup = this.makeRandomPosition(5, 6);
+        treeGroup.forEach(function (element) {
+            var tree = _this.createBitmapByName("tree_png");
+            tree.x = element.x;
+            tree.y = element.y;
+            tree.width = element.width;
+            tree.height = element.height;
+            _this.addChild(tree);
+        });
         //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
         // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
         RES.getResAsync("description_json", this.startAnimation, this);
+    };
+    /**
+     * 获取随机位置
+     * 先获得基准点点再做偏移
+     */
+    Main.prototype.makeRandomPosition = function (rows, cols) {
+        var result = [];
+        var spaceX = this.stage.stageWidth / rows;
+        var spaceY = this.stage.stageHeight / cols;
+        var iconWidth = spaceX;
+        for (var row = 0; row < rows; row++) {
+            for (var col = 0; col < cols; col++) {
+                var random = Math.floor(Math.random() * 5) / 10;
+                var x = spaceX * (row + random);
+                var y = spaceY * (col + random);
+                var width = iconWidth * random;
+                var height = width;
+                console.log(random, x, y);
+                result.push({ x: x, y: y, width: width, height: height });
+            }
+        }
+        console.log(result);
+        return result;
     };
     /**
      * 根据name关键字创建一个Bitmap对象。name属性请参考resources/resource.json配置文件的内容。
@@ -158,7 +191,6 @@ var Main = (function (_super) {
      * Description file loading is successful, start to play the animation
      */
     Main.prototype.startAnimation = function (result) {
-        var _this = this;
         var parser = new egret.HtmlTextParser();
         var textflowArr = result.map(function (text) { return parser.parse(text); });
         var textfield = this.textfield;
@@ -171,12 +203,12 @@ var Main = (function (_super) {
             var textFlow = textflowArr[count];
             // 切换描述内容
             // Switch to described content
-            textfield.textFlow = textFlow;
-            var tw = egret.Tween.get(textfield);
-            tw.to({ "alpha": 1 }, 200);
-            tw.wait(2000);
-            tw.to({ "alpha": 0 }, 200);
-            tw.call(change, _this);
+            // textfield.textFlow = textFlow;
+            // let tw = egret.Tween.get(textfield);
+            // tw.to({ "alpha": 1 }, 200);
+            // tw.wait(2000);
+            // tw.to({ "alpha": 0 }, 200);
+            // tw.call(change, this);
         };
         change();
     };
