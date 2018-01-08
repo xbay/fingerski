@@ -28,214 +28,292 @@
 //////////////////////////////////////////////////////////////////////////////////////
 
 class Main extends egret.DisplayObjectContainer {
+  /**
+   * 加载进度界面
+   * Process interface loading
+   */
+  private loadingView: LoadingUI;
+  private caracter: egret.Shape;
+  private textInfo: egret.TextField;
 
-    /**
-     * 加载进度界面
-     * Process interface loading
-     */
-    private loadingView: LoadingUI;
+  public constructor() {
+    super();
+    this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
+  }
 
-    public constructor() {
-        super();
-        this.addEventListener(egret.Event.ADDED_TO_STAGE, this.onAddToStage, this);
+  private onAddToStage(event: egret.Event) {
+    egret.lifecycle.addLifecycleListener(context => {
+      // custom lifecycle plugin
+
+      context.onUpdate = () => {};
+    });
+
+    egret.lifecycle.onPause = () => {
+      egret.ticker.pause();
+    };
+
+    egret.lifecycle.onResume = () => {
+      egret.ticker.resume();
+    };
+
+    //设置加载进度界面
+    //Config to load process interface
+    this.loadingView = new LoadingUI();
+    this.stage.addChild(this.loadingView);
+
+    //初始化Resource资源加载库
+    //initiate Resource loading library
+    RES.addEventListener(
+      RES.ResourceEvent.CONFIG_COMPLETE,
+      this.onConfigComplete,
+      this
+    );
+    RES.loadConfig("resource/default.res.json", "resource/");
+
+    //初始化Resource资源加载库
+    //initiate Resource loading library
+    RES.addEventListener(
+      RES.ResourceEvent.CONFIG_COMPLETE,
+      this.onConfigComplete,
+      this
+    );
+    RES.loadConfig("resource/default.res.json", "resource/");
+  }
+
+  /**
+   * 配置文件加载完成,开始预加载preload资源组。
+   * configuration file loading is completed, start to pre-load the preload resource group
+   */
+  private onConfigComplete(event: RES.ResourceEvent): void {
+    RES.removeEventListener(
+      RES.ResourceEvent.CONFIG_COMPLETE,
+      this.onConfigComplete,
+      this
+    );
+    RES.addEventListener(
+      RES.ResourceEvent.GROUP_COMPLETE,
+      this.onResourceLoadComplete,
+      this
+    );
+    RES.addEventListener(
+      RES.ResourceEvent.GROUP_LOAD_ERROR,
+      this.onResourceLoadError,
+      this
+    );
+    RES.addEventListener(
+      RES.ResourceEvent.GROUP_PROGRESS,
+      this.onResourceProgress,
+      this
+    );
+    RES.addEventListener(
+      RES.ResourceEvent.ITEM_LOAD_ERROR,
+      this.onItemLoadError,
+      this
+    );
+    RES.loadGroup("preload");
+  }
+
+  /**
+   * preload资源组加载完成
+   * Preload resource group is loaded
+   */
+  private onResourceLoadComplete(event: RES.ResourceEvent) {
+    if (event.groupName == "preload") {
+      this.stage.removeChild(this.loadingView);
+      RES.removeEventListener(
+        RES.ResourceEvent.GROUP_COMPLETE,
+        this.onResourceLoadComplete,
+        this
+      );
+      RES.removeEventListener(
+        RES.ResourceEvent.GROUP_LOAD_ERROR,
+        this.onResourceLoadError,
+        this
+      );
+      RES.removeEventListener(
+        RES.ResourceEvent.GROUP_PROGRESS,
+        this.onResourceProgress,
+        this
+      );
+      RES.removeEventListener(
+        RES.ResourceEvent.ITEM_LOAD_ERROR,
+        this.onItemLoadError,
+        this
+      );
+      this.createGameScene();
     }
+  }
 
-    private onAddToStage(event: egret.Event) {
+  /**
+   * 资源组加载出错
+   *  The resource group loading failed
+   */
+  private onItemLoadError(event: RES.ResourceEvent) {
+    console.warn("Url:" + event.resItem.url + " has failed to load");
+  }
 
-        egret.lifecycle.addLifecycleListener((context) => {
-            // custom lifecycle plugin
+  /**
+   * 资源组加载出错
+   *  The resource group loading failed
+   */
+  private onResourceLoadError(event: RES.ResourceEvent) {
+    //TODO
+    console.warn("Group:" + event.groupName + " has failed to load");
+    //忽略加载失败的项目
+    //Ignore the loading failed projects
+    this.onResourceLoadComplete(event);
+  }
 
-            context.onUpdate = () => {
-                console.log('hello,world')
-            }
-        })
-
-        egret.lifecycle.onPause = () => {
-            egret.ticker.pause();
-        }
-
-        egret.lifecycle.onResume = () => {
-            egret.ticker.resume();
-        }
-
-
-
-        //设置加载进度界面
-        //Config to load process interface
-        this.loadingView = new LoadingUI();
-        this.stage.addChild(this.loadingView);
-
-        //初始化Resource资源加载库
-        //initiate Resource loading library
-        RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
-        RES.loadConfig("resource/default.res.json", "resource/");
-
-
-        //初始化Resource资源加载库
-        //initiate Resource loading library
-        RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
-        RES.loadConfig("resource/default.res.json", "resource/");
+  /**
+   * preload资源组加载进度
+   * Loading process of preload resource group
+   */
+  private onResourceProgress(event: RES.ResourceEvent) {
+    if (event.groupName == "preload") {
+      this.loadingView.setProgress(event.itemsLoaded, event.itemsTotal);
     }
+  }
 
-    /**
-     * 配置文件加载完成,开始预加载preload资源组。
-     * configuration file loading is completed, start to pre-load the preload resource group
-     */
-    private onConfigComplete(event: RES.ResourceEvent): void {
-        RES.removeEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
-        RES.addEventListener(RES.ResourceEvent.GROUP_COMPLETE, this.onResourceLoadComplete, this);
-        RES.addEventListener(RES.ResourceEvent.GROUP_LOAD_ERROR, this.onResourceLoadError, this);
-        RES.addEventListener(RES.ResourceEvent.GROUP_PROGRESS, this.onResourceProgress, this);
-        RES.addEventListener(RES.ResourceEvent.ITEM_LOAD_ERROR, this.onItemLoadError, this);
-        RES.loadGroup("preload");
+  private textfield: egret.TextField;
+
+  /**
+   * 创建游戏场景
+   * Create a game scene
+   */
+  private createGameScene() {
+    this.createSky();
+    this.createMainCharacter();
+    this.createTextInfo();
+    this.createBackgroundTrees();
+    //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
+    // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
+    RES.getResAsync("description_json", this.startAnimation, this);
+  }
+  /**
+   * 创建天空
+   */
+  private createSky() {
+    let stageW = this.stage.stageWidth;
+    let stageH = this.stage.stageHeight;
+
+    let sky = new egret.Shape();
+    sky.graphics.beginFill(0xefefef, 1);
+    sky.graphics.drawRect(0, 0, stageW, stageH);
+    sky.graphics.endFill();
+
+    sky.width = stageW;
+    sky.height = stageH;
+    this.addChild(sky);
+  }
+
+  /**
+   * 创建调试文字
+   */
+  private createTextInfo() {
+    this.textInfo = new egret.TextField();
+    this.addChild(this.textInfo);
+    this.textInfo.size = 28;
+    this.textInfo.x = 50;
+    this.textInfo.y = 50;
+    this.textInfo.textAlign = egret.HorizontalAlign.LEFT;
+    this.textInfo.textColor = 0x000000;
+    this.textInfo.type = egret.TextFieldType.DYNAMIC;
+    this.textInfo.lineSpacing = 6;
+    this.textInfo.multiline = true;
+  }
+
+  /**
+   * 创建人物
+   */
+  private createMainCharacter() {
+    this.caracter = new egret.Shape();
+    this.caracter.graphics.beginFill(0xff0000, 1);
+    this.caracter.graphics.drawRect(0, 0, 20, 10);
+    this.caracter.graphics.endFill();
+    this.addChild(this.caracter);
+    var isHit: boolean = this.caracter.hitTestPoint(10, 10, true);
+    this.textInfo.text = 'isHit:' + isHit
+  }
+
+  /**
+   * 获取随机位置
+   * 先获得基准点点再做偏移
+   */
+  private createBackgroundTrees() {
+    const treeGroup = this.makeRandomPosition(5, 6);
+    treeGroup.forEach(element => {
+      let tree = this.createBitmapByName("tree_png");
+      tree.x = element.x;
+      tree.y = element.y;
+      tree.width = element.width;
+      tree.height = element.height;
+      this.addChild(tree);
+    });
+  }
+
+  /**
+   * 获取随机位置
+   * 先获得基准点点再做偏移
+   */
+  private makeRandomPosition(rows: number, cols: number): any[] {
+    let result = [];
+    let spaceX = this.stage.stageWidth / rows;
+    let spaceY = this.stage.stageHeight / cols;
+    let iconWidth = spaceX;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        let random = Math.floor(Math.random() * 5) / 10;
+        let x = spaceX * (row + random);
+        let y = spaceY * (col + random);
+        let width = iconWidth * random;
+        let height = width;
+        console.log(random, x, y);
+        result.push({ x, y, width, height });
+      }
     }
+    console.log(result);
 
-    /**
-     * preload资源组加载完成
-     * Preload resource group is loaded
-     */
-    private onResourceLoadComplete(event: RES.ResourceEvent) {
-        if (event.groupName == "preload") {
-            this.stage.removeChild(this.loadingView);
-            RES.removeEventListener(RES.ResourceEvent.GROUP_COMPLETE, this.onResourceLoadComplete, this);
-            RES.removeEventListener(RES.ResourceEvent.GROUP_LOAD_ERROR, this.onResourceLoadError, this);
-            RES.removeEventListener(RES.ResourceEvent.GROUP_PROGRESS, this.onResourceProgress, this);
-            RES.removeEventListener(RES.ResourceEvent.ITEM_LOAD_ERROR, this.onItemLoadError, this);
-            this.createGameScene();
-        }
-    }
+    return result;
+  }
 
-    /**
-     * 资源组加载出错
-     *  The resource group loading failed
-     */
-    private onItemLoadError(event: RES.ResourceEvent) {
-        console.warn("Url:" + event.resItem.url + " has failed to load");
-    }
+  /**
+   * 根据name关键字创建一个Bitmap对象。name属性请参考resources/resource.json配置文件的内容。
+   * Create a Bitmap object according to name keyword.As for the property of name please refer to the configuration file of resources/resource.json.
+   */
+  private createBitmapByName(name: string) {
+    let result = new egret.Bitmap();
+    let texture: egret.Texture = RES.getRes(name);
+    result.texture = texture;
+    return result;
+  }
 
-    /**
-     * 资源组加载出错
-     *  The resource group loading failed
-     */
-    private onResourceLoadError(event: RES.ResourceEvent) {
-        //TODO
-        console.warn("Group:" + event.groupName + " has failed to load");
-        //忽略加载失败的项目
-        //Ignore the loading failed projects
-        this.onResourceLoadComplete(event);
-    }
+  /**
+   * 描述文件加载成功，开始播放动画
+   * Description file loading is successful, start to play the animation
+   */
+  private startAnimation(result: string[]) {
+    let parser = new egret.HtmlTextParser();
 
-    /**
-     * preload资源组加载进度
-     * Loading process of preload resource group
-     */
-    private onResourceProgress(event: RES.ResourceEvent) {
-        if (event.groupName == "preload") {
-            this.loadingView.setProgress(event.itemsLoaded, event.itemsTotal);
-        }
-    }
+    let textflowArr = result.map(text => parser.parse(text));
+    let textfield = this.textfield;
+    let count = -1;
+    let change = () => {
+      count++;
+      if (count >= textflowArr.length) {
+        count = 0;
+      }
+      let textFlow = textflowArr[count];
 
-    private textfield: egret.TextField;
+      // 切换描述内容
+      // Switch to described content
+      // textfield.textFlow = textFlow;
+      // let tw = egret.Tween.get(textfield);
+      // tw.to({ "alpha": 1 }, 200);
+      // tw.wait(2000);
+      // tw.to({ "alpha": 0 }, 200);
+      // tw.call(change, this);
+    };
 
-    /**
-     * 创建游戏场景
-     * Create a game scene
-     */
-    private createGameScene() {
-        let stageW = this.stage.stageWidth;
-        let stageH = this.stage.stageHeight;
-
-        let sky = new egret.Shape();
-        sky.graphics.beginFill(0xEFEFEF, 1);
-        sky.graphics.drawRect(0, 0, stageW, stageH);
-        sky.graphics.endFill();
-
-        sky.width = stageW;
-        sky.height = stageH;
-        this.addChild(sky);
-        
-        let treeGroup = this.makeRandomPosition(5, 6);
-
-        treeGroup.forEach(element => {
-            let tree = this.createBitmapByName("tree_png");
-            tree.x = element.x;
-            tree.y = element.y;
-            tree.width = element.width;
-            tree.height = element.height;
-            this.addChild(tree);
-        });
-        
-
-        //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
-        // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
-        RES.getResAsync("description_json", this.startAnimation, this)
-    }
-
-    /**
-     * 获取随机位置
-     * 先获得基准点点再做偏移
-     */
-    private makeRandomPosition(rows: number, cols: number): any[] {
-        let result = [];
-        let spaceX = this.stage.stageWidth / rows;
-        let spaceY = this.stage.stageHeight / cols;
-        let iconWidth = spaceX;
-        for(let row = 0;  row < rows; row++ ){
-            for(let col = 0; col < cols; col++ ){
-                let random = Math.floor(Math.random() * 5) / 10
-                let x = spaceX * (row + random);
-                let y = spaceY * (col + random);
-                let width = iconWidth * random;
-                let height = width;
-                console.log(random,x,y)
-                result.push({x, y, width, height})
-            }
-        }
-        console.log(result)
-
-        return result;
-    }
-
-    /**
-     * 根据name关键字创建一个Bitmap对象。name属性请参考resources/resource.json配置文件的内容。
-     * Create a Bitmap object according to name keyword.As for the property of name please refer to the configuration file of resources/resource.json.
-     */
-    private createBitmapByName(name: string) {
-        let result = new egret.Bitmap();
-        let texture: egret.Texture = RES.getRes(name);
-        result.texture = texture;
-        return result;
-    }
-
-    /**
-     * 描述文件加载成功，开始播放动画
-     * Description file loading is successful, start to play the animation
-     */
-    private startAnimation(result: string[]) {
-        let parser = new egret.HtmlTextParser();
-
-        let textflowArr = result.map(text => parser.parse(text));
-        let textfield = this.textfield;
-        let count = -1;
-        let change = () => {
-            count++;
-            if (count >= textflowArr.length) {
-                count = 0;
-            }
-            let textFlow = textflowArr[count];
-
-            // 切换描述内容
-            // Switch to described content
-            // textfield.textFlow = textFlow;
-            // let tw = egret.Tween.get(textfield);
-            // tw.to({ "alpha": 1 }, 200);
-            // tw.wait(2000);
-            // tw.to({ "alpha": 0 }, 200);
-            // tw.call(change, this);
-        };
-
-        change();
-    }
+    change();
+  }
 }
-
-

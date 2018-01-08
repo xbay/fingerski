@@ -49,9 +49,7 @@ var Main = (function (_super) {
     Main.prototype.onAddToStage = function (event) {
         egret.lifecycle.addLifecycleListener(function (context) {
             // custom lifecycle plugin
-            context.onUpdate = function () {
-                console.log('hello,world');
-            };
+            context.onUpdate = function () { };
         });
         egret.lifecycle.onPause = function () {
             egret.ticker.pause();
@@ -130,16 +128,61 @@ var Main = (function (_super) {
      * Create a game scene
      */
     Main.prototype.createGameScene = function () {
-        var _this = this;
+        this.createSky();
+        this.createMainCharacter();
+        this.createTextInfo();
+        this.createBackgroundTrees();
+        //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
+        // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
+        RES.getResAsync("description_json", this.startAnimation, this);
+    };
+    /**
+     * 创建天空
+     */
+    Main.prototype.createSky = function () {
         var stageW = this.stage.stageWidth;
         var stageH = this.stage.stageHeight;
         var sky = new egret.Shape();
-        sky.graphics.beginFill(0xEFEFEF, 1);
+        sky.graphics.beginFill(0xefefef, 1);
         sky.graphics.drawRect(0, 0, stageW, stageH);
         sky.graphics.endFill();
         sky.width = stageW;
         sky.height = stageH;
         this.addChild(sky);
+    };
+    /**
+     * 创建调试文字
+     */
+    Main.prototype.createTextInfo = function () {
+        var textInfo = new egret.TextField();
+        this.addChild(textInfo);
+        textInfo.size = 28;
+        textInfo.x = 50;
+        textInfo.y = 50;
+        textInfo.textAlign = egret.HorizontalAlign.LEFT;
+        textInfo.textColor = 0x000000;
+        textInfo.type = egret.TextFieldType.DYNAMIC;
+        textInfo.lineSpacing = 6;
+        textInfo.multiline = true;
+    };
+    /**
+     * 创建人物
+     */
+    Main.prototype.createMainCharacter = function () {
+        this.caracter = new egret.Shape();
+        this.caracter.graphics.beginFill(0xff0000, 1);
+        this.caracter.graphics.drawRect(0, 0, 20, 10);
+        this.caracter.graphics.endFill();
+        this.addChild(this.caracter);
+        var isHit = this.caracter.hitTestPoint(10, 10, true);
+        console.log("im in");
+    };
+    /**
+     * 获取随机位置
+     * 先获得基准点点再做偏移
+     */
+    Main.prototype.createBackgroundTrees = function () {
+        var _this = this;
         var treeGroup = this.makeRandomPosition(5, 6);
         treeGroup.forEach(function (element) {
             var tree = _this.createBitmapByName("tree_png");
@@ -149,9 +192,6 @@ var Main = (function (_super) {
             tree.height = element.height;
             _this.addChild(tree);
         });
-        //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
-        // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
-        RES.getResAsync("description_json", this.startAnimation, this);
     };
     /**
      * 获取随机位置
