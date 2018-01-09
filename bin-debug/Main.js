@@ -143,11 +143,18 @@ var Main = (function (_super) {
             tree.y = element.y;
             tree.width = element.width;
             tree.height = element.height;
+            tree.addEventListener(egret.Event.ADDED_TO_STAGE, _this.treeOnMove, _this);
             _this.addChild(tree);
         });
         //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
         // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
         RES.getResAsync("description_json", this.startAnimation, this);
+    };
+    Main.prototype.treeOnMove = function (evt) {
+        var stageH = this.stage.stageHeight;
+        console.log(evt.target);
+        var tw = egret.Tween.get(evt.target, { loop: true });
+        tw.to({ x: evt.target.x, y: evt.target.y - stageH }, 5000);
     };
     /**
      * 获取随机位置
@@ -160,13 +167,13 @@ var Main = (function (_super) {
         var iconWidth = spaceX;
         for (var row = 0; row < rows; row++) {
             for (var col = 0; col < cols; col++) {
-                var random = Math.floor(Math.random() * 3 + 4) / 10;
+                var random = Math.floor(Math.random() * 5 + 3) / 10;
                 var x = spaceX * (row + random);
                 var y = spaceY * (col + random);
                 var width = iconWidth * random;
                 var height = width;
                 console.log(random, x, y);
-                result.push({ x: x, y: y, width: width, height: height });
+                result.push({ x: x, y: y, width: width, height: height, random: random });
             }
         }
         return result;

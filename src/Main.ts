@@ -27,11 +27,12 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
-interface Position {
+interface TreePos {
     x: number;
     y: number;
     width: number;
     height: number;
+    random?: number;
 }
 
 class Main extends egret.DisplayObjectContainer {
@@ -166,6 +167,7 @@ class Main extends egret.DisplayObjectContainer {
             tree.y = element.y;
             tree.width = element.width;
             tree.height = element.height;
+            tree.addEventListener(egret.Event.ADDED_TO_STAGE,this.treeOnMove, this);
             this.addChild(tree);
         });
         
@@ -175,11 +177,18 @@ class Main extends egret.DisplayObjectContainer {
         RES.getResAsync("description_json", this.startAnimation, this)
     }
 
+    private treeOnMove(evt: egret.Event) {
+        let stageH = this.stage.stageHeight;
+        console.log(evt.target)
+        var tw = egret.Tween.get( evt.target, { loop:true} );
+        tw.to({x:evt.target.x, y: evt.target.y-stageH }, 5000)
+    }
+
     /**
      * 获取随机位置
      * 先获得基准点点再做偏移
      */
-    private makeRandomPosition(rows: number, cols: number): Position[] {
+    private makeRandomPosition(rows: number, cols: number): TreePos[] {
         let result = [];
         let spaceX = this.stage.stageWidth / rows;
         let spaceY = this.stage.stageHeight / cols;
@@ -192,7 +201,7 @@ class Main extends egret.DisplayObjectContainer {
                 let width = iconWidth * random;
                 let height = width;
                 console.log(random,x,y)
-                result.push({x, y, width, height})
+                result.push({x, y, width, height, random})
             }
         }
 
