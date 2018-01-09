@@ -67,10 +67,6 @@ var Main = (function (_super) {
         //initiate Resource loading library
         RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
         RES.loadConfig("resource/default.res.json", "resource/");
-        //初始化Resource资源加载库
-        //initiate Resource loading library
-        RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
-        RES.loadConfig("resource/default.res.json", "resource/");
     };
     /**
      * 配置文件加载完成,开始预加载preload资源组。
@@ -164,7 +160,7 @@ var Main = (function (_super) {
         var iconWidth = spaceX;
         for (var row = 0; row < rows; row++) {
             for (var col = 0; col < cols; col++) {
-                var random = Math.floor(Math.random() * 5) / 10;
+                var random = Math.floor(Math.random() * 3 + 4) / 10;
                 var x = spaceX * (row + random);
                 var y = spaceY * (col + random);
                 var width = iconWidth * random;
@@ -173,7 +169,6 @@ var Main = (function (_super) {
                 result.push({ x: x, y: y, width: width, height: height });
             }
         }
-        console.log(result);
         return result;
     };
     /**

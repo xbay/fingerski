@@ -27,7 +27,16 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
+interface Position {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
 class Main extends egret.DisplayObjectContainer {
+
+
 
     /**
      * 加载进度界面
@@ -70,11 +79,6 @@ class Main extends egret.DisplayObjectContainer {
         RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
         RES.loadConfig("resource/default.res.json", "resource/");
 
-
-        //初始化Resource资源加载库
-        //initiate Resource loading library
-        RES.addEventListener(RES.ResourceEvent.CONFIG_COMPLETE, this.onConfigComplete, this);
-        RES.loadConfig("resource/default.res.json", "resource/");
     }
 
     /**
@@ -175,14 +179,14 @@ class Main extends egret.DisplayObjectContainer {
      * 获取随机位置
      * 先获得基准点点再做偏移
      */
-    private makeRandomPosition(rows: number, cols: number): any[] {
+    private makeRandomPosition(rows: number, cols: number): Position[] {
         let result = [];
         let spaceX = this.stage.stageWidth / rows;
         let spaceY = this.stage.stageHeight / cols;
         let iconWidth = spaceX;
         for(let row = 0;  row < rows; row++ ){
             for(let col = 0; col < cols; col++ ){
-                let random = Math.floor(Math.random() * 5) / 10
+                let random = Math.floor(Math.random() * 5 + 3) / 10
                 let x = spaceX * (row + random);
                 let y = spaceY * (col + random);
                 let width = iconWidth * random;
@@ -191,7 +195,6 @@ class Main extends egret.DisplayObjectContainer {
                 result.push({x, y, width, height})
             }
         }
-        console.log(result)
 
         return result;
     }
