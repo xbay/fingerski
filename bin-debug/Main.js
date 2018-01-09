@@ -39,6 +39,11 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var Direction;
+(function (Direction) {
+    Direction[Direction["Left"] = 0] = "Left";
+    Direction[Direction["Right"] = 1] = "Right";
+})(Direction || (Direction = {}));
 var Main = (function (_super) {
     __extends(Main, _super);
     function Main() {
@@ -127,10 +132,25 @@ var Main = (function (_super) {
         this.createSky();
         this.createMainCharacter();
         this.createBackgroundTrees();
+        this.configStageEvents();
         //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
         // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
         RES.getResAsync("description_json", this.startAnimation, this);
     };
+    /**
+     * 舞台全局事件处理
+     */
+    Main.prototype.configStageEvents = function () {
+        this.stage.addEventListener(egret.TouchEvent.TOUCH_BEGIN, this.touchHandler, this);
+        // this.stage.addEventListener(
+        //   egret.TouchEvent.TOUCH_MOVE,
+        //   this.touchHandler,
+        //   this
+        // );
+    };
+    /**
+     * 判断碰撞
+     */
     Main.prototype.checkCollision = function (stageX, stageY) {
         var isHit = false;
         this.trees.forEach(function (item) {
@@ -138,14 +158,34 @@ var Main = (function (_super) {
                 isHit = item.hitTestPoint(stageX, stageY, true);
             }
         });
-        this.caracter.x = stageX;
-        this.caracter.y = stageY;
         if (isHit) {
             alert("hit it");
         }
     };
+    /**
+     * 触摸事件处理
+     */
     Main.prototype.touchHandler = function (evt) {
+        switch (evt.type) {
+            case egret.TouchEvent.TOUCH_BEGIN:
+                this.caracterTween(evt.stageX, evt.stageY);
+                break;
+        }
         this.checkCollision(evt.stageX, evt.stageY);
+    };
+    /**
+     * 人物动画
+     */
+    Main.prototype.caracterTween = function (stageX, stageY) {
+        var stageWidth = this.stage.stageWidth;
+        var stageHeight = this.stage.stageHeight;
+        var isRight = this.currentDirection === Direction.Right;
+        this.currentDirection = isRight ? Direction.Left : Direction.Right;
+        egret.Tween.removeTweens(this.caracter);
+        egret.Tween.get(this.caracter).to({
+            x: isRight ? 0 : stageWidth,
+            y: stageHeight * 0.4
+        }, 1500, egret.Ease.sineInOut);
     };
     /**
      * 创建背景树
@@ -189,7 +229,8 @@ var Main = (function (_super) {
         this.caracter.graphics.beginFill(0x00ff00);
         this.caracter.graphics.drawCircle(0, 0, 10);
         this.caracter.graphics.endFill();
-        this.stage.addEventListener(egret.TouchEvent.TOUCH_MOVE, this.touchHandler, this);
+        this.caracter.x = this.stage.stageWidth / 2;
+        this.caracter.y = this.stage.stageHeight * 0.4;
         this.addChild(this.caracter);
     };
     Main.prototype.treeOnMove = function (evt) {

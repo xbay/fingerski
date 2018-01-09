@@ -34,6 +34,10 @@ interface TreePos {
   height: number;
   random?: number;
 }
+enum Direction {
+  Left,
+  Right
+}
 
 class Main extends egret.DisplayObjectContainer {
   /**
@@ -43,6 +47,7 @@ class Main extends egret.DisplayObjectContainer {
   private loadingView: LoadingUI;
   private caracter: egret.Shape;
   private trees: Array<egret.Bitmap>;
+  private currentDirection: Direction;
 
   public constructor() {
     super();
@@ -183,11 +188,31 @@ class Main extends egret.DisplayObjectContainer {
     this.createSky();
     this.createMainCharacter();
     this.createBackgroundTrees();
+    this.configStageEvents();
 
     //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
     // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
     RES.getResAsync("description_json", this.startAnimation, this);
   }
+  /**
+   * 舞台全局事件处理
+   */
+  private configStageEvents() {
+    this.stage.addEventListener(
+      egret.TouchEvent.TOUCH_BEGIN,
+      this.touchHandler,
+      this
+    );
+    // this.stage.addEventListener(
+    //   egret.TouchEvent.TOUCH_MOVE,
+    //   this.touchHandler,
+    //   this
+    // );
+  }
+
+  /**
+   * 判断碰撞
+   */
   private checkCollision(stageX: number, stageY: number) {
     let isHit = false;
     this.trees.forEach(item => {
@@ -195,14 +220,40 @@ class Main extends egret.DisplayObjectContainer {
         isHit = item.hitTestPoint(stageX, stageY, true);
       }
     });
-    this.caracter.x = stageX;
-    this.caracter.y = stageY;
     if (isHit) {
       alert("hit it");
     }
   }
+
+  /**
+   * 触摸事件处理
+   */
   private touchHandler(evt: egret.TouchEvent) {
+    switch (evt.type) {
+      case egret.TouchEvent.TOUCH_BEGIN:
+        this.caracterTween(evt.stageX, evt.stageY);
+        break;
+    }
     this.checkCollision(evt.stageX, evt.stageY);
+  }
+
+  /**
+   * 人物动画
+   */
+  private caracterTween(stageX: number, stageY: number) {
+    const stageWidth = this.stage.stageWidth;
+    const stageHeight = this.stage.stageHeight;
+    const isRight = this.currentDirection === Direction.Right;
+    this.currentDirection = isRight ? Direction.Left : Direction.Right;
+    egret.Tween.removeTweens(this.caracter);
+    egret.Tween.get(this.caracter).to(
+      {
+        x: isRight ? 0 : stageWidth,
+        y: stageHeight * 0.4
+      },
+      1500,
+      egret.Ease.sineInOut
+    );
   }
 
   /**
@@ -250,11 +301,8 @@ class Main extends egret.DisplayObjectContainer {
     this.caracter.graphics.beginFill(0x00ff00);
     this.caracter.graphics.drawCircle(0, 0, 10);
     this.caracter.graphics.endFill();
-    this.stage.addEventListener(
-      egret.TouchEvent.TOUCH_MOVE,
-      this.touchHandler,
-      this
-    );
+    this.caracter.x = this.stage.stageWidth / 2;
+    this.caracter.y = this.stage.stageHeight * 0.4;
     this.addChild(this.caracter);
   }
 
