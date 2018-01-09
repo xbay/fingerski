@@ -49,9 +49,7 @@ var Main = (function (_super) {
     Main.prototype.onAddToStage = function (event) {
         egret.lifecycle.addLifecycleListener(function (context) {
             // custom lifecycle plugin
-            context.onUpdate = function () {
-                console.log('hello,world');
-            };
+            context.onUpdate = function () { };
         });
         egret.lifecycle.onPause = function () {
             egret.ticker.pause();
@@ -126,16 +124,34 @@ var Main = (function (_super) {
      * Create a game scene
      */
     Main.prototype.createGameScene = function () {
+        this.createSky();
+        this.createMainCharacter();
+        this.createBackgroundTrees();
+        //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
+        // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
+        RES.getResAsync("description_json", this.startAnimation, this);
+    };
+    Main.prototype.checkCollision = function (stageX, stageY) {
+        var isHit = false;
+        this.trees.forEach(function (item) {
+            if (!isHit) {
+                isHit = item.hitTestPoint(stageX, stageY, true);
+            }
+        });
+        this.caracter.x = stageX;
+        this.caracter.y = stageY;
+        if (isHit) {
+            alert("hit it");
+        }
+    };
+    Main.prototype.touchHandler = function (evt) {
+        this.checkCollision(evt.stageX, evt.stageY);
+    };
+    /**
+     * 创建背景树
+     */
+    Main.prototype.createBackgroundTrees = function () {
         var _this = this;
-        var stageW = this.stage.stageWidth;
-        var stageH = this.stage.stageHeight;
-        var sky = new egret.Shape();
-        sky.graphics.beginFill(0xEFEFEF, 1);
-        sky.graphics.drawRect(0, 0, stageW, stageH);
-        sky.graphics.endFill();
-        sky.width = stageW;
-        sky.height = stageH;
-        this.addChild(sky);
         var treeGroup = this.makeRandomPosition(5, 6);
         treeGroup.forEach(function (element) {
             var tree = _this.createBitmapByName("tree_png");
@@ -144,15 +160,40 @@ var Main = (function (_super) {
             tree.width = element.width;
             tree.height = element.height;
             tree.addEventListener(egret.Event.ADDED_TO_STAGE, _this.treeOnMove, _this);
+            if (!_this.trees) {
+                _this.trees = [];
+            }
+            _this.trees.push(tree);
             _this.addChild(tree);
         });
-        //根据name关键字，异步获取一个json配置文件，name属性请参考resources/resource.json配置文件的内容。
-        // Get asynchronously a json configuration file according to name keyword. As for the property of name please refer to the configuration file of resources/resource.json.
-        RES.getResAsync("description_json", this.startAnimation, this);
+    };
+    /**
+     * 创建天空
+     */
+    Main.prototype.createSky = function () {
+        var stageW = this.stage.stageWidth;
+        var stageH = this.stage.stageHeight;
+        var sky = new egret.Shape();
+        sky.graphics.beginFill(0xefefef, 1);
+        sky.graphics.drawRect(0, 0, stageW, stageH);
+        sky.graphics.endFill();
+        sky.width = stageW;
+        sky.height = stageH;
+        this.addChild(sky);
+    };
+    /**
+     * 创建人物
+     */
+    Main.prototype.createMainCharacter = function () {
+        this.caracter = new egret.Shape();
+        this.caracter.graphics.beginFill(0x00ff00);
+        this.caracter.graphics.drawCircle(0, 0, 10);
+        this.caracter.graphics.endFill();
+        this.stage.addEventListener(egret.TouchEvent.TOUCH_MOVE, this.touchHandler, this);
+        this.addChild(this.caracter);
     };
     Main.prototype.treeOnMove = function (evt) {
         var stageH = this.stage.stageHeight;
-        console.log(evt.target);
         var tw = egret.Tween.get(evt.target, { loop: true });
         tw.to({ x: evt.target.x, y: evt.target.y - stageH }, 5000);
     };
@@ -172,7 +213,6 @@ var Main = (function (_super) {
                 var y = spaceY * (col + random);
                 var width = iconWidth * random;
                 var height = width;
-                console.log(random, x, y);
                 result.push({ x: x, y: y, width: width, height: height, random: random });
             }
         }
